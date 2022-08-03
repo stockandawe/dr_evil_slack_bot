@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'os'
-
 SlackRubyBotServer::Events.configure do |config|
   config.on :event, ['event_callback', 'member_joined_channel'] do |event|
     team = Team.where(team_id: event[:event][:team]).first || raise("Cannot find team with ID #{event[:event][:team]}.")
@@ -14,14 +12,12 @@ SlackRubyBotServer::Events.configure do |config|
     channel = slack_client.conversations_info(channel: event[:event][:channel])
     channel_name = channel[:channel][:name]
 
-    if OS.linux?
+    if system('which mpg123 > /dev/null 2>&1')
       fork { exec 'mpg123', 'assets/welcome.mp3' }
-    elsif OS.mac?
-      fork { exec 'afplay', 'assets/welcome.mp3' }
     else
+      slack_client.chat_postMessage(channel: event[:event][:channel], text: "Welcome #{user_name} to #{channel_name}!")
       event.logger.info 'Cannot play audio message.'
     end
-    # slack_client.chat_postMessage(channel: event[:event][:channel], text: "Welcome #{user_name} to #{channel_name}!")
     event.logger.info "User #{user_name} joined #{channel_name}."
 
     { ok: true }

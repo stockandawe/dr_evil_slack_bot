@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'os'
-
 evil_quotes = {
   'breaking news' => 'one_million_dollars.mp3',
   'pull request merged' => 'begin_deploy.mp3',
@@ -30,10 +28,8 @@ SlackRubyBotServer::Events.configure do |config|
       evil_quotes.each_key do |substring|
         key_for_quote = substring if message.downcase.include? substring
       end
-      if OS.linux?
+      if system('which mpg123 > /dev/null 2>&1')
         fork { exec 'mpg123', "assets/#{evil_quotes[key_for_quote]}" }
-      elsif OS.mac?
-        fork { exec 'afplay', "assets/#{evil_quotes[key_for_quote]}" }
       else
         event.logger.info "Cannot play audio message: #{event[:event][:text]} in #{channel_name}."
       end
